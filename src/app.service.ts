@@ -105,11 +105,11 @@ async deleted(data:any) {
 	console.log(found);
  try {
 	 if(found.userName === data.userName){
-		 const hashedPass = found.passWord;
-		 console.log(hashedPass);
+		 const hashed = found.passWord;
+		 console.log(hashed);
 		 const passWord = data.passWord;
 		 console.log(passWord);
-		 const match = await bcrypt.compare(passWord,hashedPass);
+		 const match = await bcrypt.compare(passWord,hashed);
 		 console.log(match);
 
 		 if(match === false) {
@@ -131,23 +131,28 @@ async updateEmployee(data:any) {
 	console.log(found);
 	try {
 		if(found.userName === data.userName) {
-			const hashedPass = found.passWord;
+			const hashed = found.passWord;
+			console.log(hashed);
 			const passWord = data.passWord;
-			const match = await bcrypt.compare(passWord,hashedPass);
+			console.log(passWord);
+			const match = await bcrypt.compare(passWord,hashed);
 			console.log(match);
 
 			if(match === false) {
 				return 'PassWord Incorrect'
 			} 
 			else {
-				const name = data.userName;
+				const name= data.userName
+				delete data.userName
+				delete data.passWord
 				await this.ER.update({name:name},data)
-				return 'updated successfully';
+				console.log("check",match,data)
+				return 'updated successfuilly';
 			}
 		}
 	}
-        catch(err) {
-		return 'Error occured message : $(err.message)'
+        catch (err){
+		return `Error found: ${err.message}`
 	}
     }
 }

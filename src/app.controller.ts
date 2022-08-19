@@ -67,6 +67,7 @@ async deleted(@Body() data:any) {
 
 @Patch('update')
 async updated(@Body() data:any) {
+
 	const result = await this.appService.updateEmployee(data);
 	console.log(result);
 	return result;
