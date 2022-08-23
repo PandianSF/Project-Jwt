@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post,Delete,Patch } from '@nestjs/common';
+import { Body, Controller, Get, Post,Delete,Patch, Headers } from '@nestjs/common';
 import { AppService } from './app.service';
 
-@Controller('auth-bcrypt')
+@Controller('jwt')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
@@ -15,7 +15,7 @@ export class AppController {
   };
 }
 
-@Get('all')
+@Get('get-all')
 async getEmployee() {
         const users = await this.appService.getEmployee();
         return {
@@ -24,9 +24,9 @@ async getEmployee() {
         };
 }
 
-@Post('bcrypt-sign')
-async signin(@Body() data:any) {
-        const auth = await this.appService.signin(data);
+@Post('signIn')
+async signup(@Body() data:any) {
+        const auth = await this.appService.signup(data);
         return {
                 message:'userName and passWord posted successfully',
                 auth
@@ -35,40 +35,46 @@ async signin(@Body() data:any) {
 
 @Get('signall')
 async getAll() {
-        const auths = await this.appService.signal();
+        const auths = await this.appService.signall();
         return {
                 message:'All auths returned',
                 auths
         };
 }
 
-@Delete('userName')
-async delete(@Body()data:any) {
-        await this.appService.destroy(data);
-        return {
-                message:'repeated data deleted',
-        };
-}
-
-@Get('auth')
+@Get('LogIn')
 async auth(@Body() data:any) {
-     const verif = await this.appService.authbcrypt(data);
-    console.log(verif);
+     const ver = await this.appService.logIn(data);
+    console.log(ver);
      return {
              message:'UserName verified sucessfully',
-             verif
+             ver
      };
 }  
 
-@Post('delete')
-async deleted(@Body() data:any) {
-      return await this.appService.deleted(data);
+@Get('find')
+async findEmployee(@Body() data:any, @Headers() headers) {
+	console.log(headers);
+	const found = await this.appService.findEmployee(headers);
+	console.log(found);
+	return {
+		message:'Data found successfully',
+		found
+	}
+}
+
+@Delete('remove')
+async deleted(@Body() data:any,@Headers() headers) {
+	console.log(headers);
+      
+	return await this.appService.deleted(headers);
 }
 
 @Patch('update')
-async updated(@Body() data:any) {
+async updated(@Body() data:any,@Headers() headers) {
+        console.log(headers); 
 
-	const result = await this.appService.updateEmployee(data);
+	const result = await this.appService.updateEmployee(headers);
 	console.log(result);
 	return result;
 }

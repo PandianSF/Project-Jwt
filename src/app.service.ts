@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Authentication,Employees,Hash } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AppService {
@@ -16,6 +17,8 @@ constructor(
 
 	@InjectRepository(Hash)
 	private HR: Repository<Hash>,
+
+	private jwtService: JwtService
 ){}
 
 async newEmployee(data: any) {
@@ -41,7 +44,7 @@ async getEmployee() {
         return await this.ER.find();
 }
 
-async signin(data: any) {
+async signup(data: any) {
         console.log(data);
         const userName = data.userName;
            console.log(userName);
@@ -62,15 +65,11 @@ async signin(data: any) {
            return signin;
 }
 
-async signal() {
+async signall() {
    return await this.HR.find();
 }
 
-async destroy(data:any){
-        await this.HR.delete({userName:data.userName})
-}
-
-async authbcrypt(data:any) {
+async logIn(data:any) {
 	console.log(data);
 
 	const found = await this.HR.findOne({where:{userName:data.userName},});
@@ -89,10 +88,17 @@ async authbcrypt(data:any) {
 		return 'Username / PassWord Incorrect';
 		} 
 		else {
-		const find = await this.ER.findOne({where:{name:data.userName},});
+	/**	const find = await this.ER.findOne({where:{name:data.userName},});
 		console.log(find);
-		return find;
-		}
+		return find; **/
+
+	       const payload = {name:data.userName, secret:'secretKey' };
+	       console.log(payload);
+	       const jwt = await this.jwtService.sign(payload);
+	       console.log('jwt',jwt);
+	       return jwt;
+
+		} 
 	}
  }
    catch {
@@ -100,56 +106,47 @@ async authbcrypt(data:any) {
 }
 }
 
-async deleted(data:any) {
-	const found = await this.HR.findOne({where:{userName:data.userName},});
-	console.log(found);
- try {
-	 if(found.userName === data.userName){
-		 const hashed = found.passWord;
-		 console.log(hashed);
-		 const passWord = data.passWord;
-		 console.log(passWord);
-		 const match = await bcrypt.compare(passWord,hashed);
-		 console.log(match);
+async findEmployee(data:any) {
+	console.log(data);
+	try {
+		const valid = await this.jwtService.verify(data.authorization,{secret:'secretKey'});
+		console.log(valid);
 
-		 if(match === false) {
-			 return 'PassWord Incorrect';
-		 } 
-		 else {
-			 await this.ER.update({name:data.userName},{isActive:false});
-		 return 'you are fired';
-              }
-	 }
- }
- catch {
-	 return 'userName/PassWord Incorrect';
+		const res =  await this.ER.findOne({where:{name:valid.name},});
+		console.log(res);
+		return res;
+	}
+	catch {
+		return 'userName/passWord Incorrect!';
+	}
+}
+
+async deleted(data:any) {
+	console.log(data);
+
+       	try {
+	const valid = await this.jwtService.verify(data.authorization,{secret:'secretKey'});
+	console.log(valid);
+
+	await this.ER.update({name:valid.name},{isActive:false});
+	return 'You are fired';
+  }
+ catch(error) {
+	 return `Data Invalid : ${error.message}`;
  }
 }
 
 async updateEmployee(data:any) {
-	const found = await this.HR.findOne({where:{userName:data.userName},});
-	console.log(found);
-	try {
-		if(found.userName === data.userName) {
-			const hashed = found.passWord;
-			console.log(hashed);
-			const passWord = data.passWord;
-			console.log(passWord);
-			const match = await bcrypt.compare(passWord,hashed);
-			console.log(match);
+       console.log(data);
 
-			if(match === false) {
-				return 'PassWord Incorrect'
-			} 
-			else {
-				const name= data.userName
-				delete data.userName
-				delete data.passWord
-				await this.ER.update({name:name},data)
-				console.log("check",match,data)
-				return 'updated successfuilly';
-			}
-		}
+       try {
+	  const valid = await this.jwtService.verify(data.authorization,{secret:'secretKey'});
+	  console.log(valid);
+
+	  const changed = await this.ER.update({name:valid.name},data);
+	  console.log(changed);
+	  return 'Data updated Successfully';
+
 	}
         catch (err){
 		return `Error found: ${err.message}`
